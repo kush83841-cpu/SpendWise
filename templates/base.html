@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}SpendWise{% endblock %} · SpendWise</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+    <div class="bg-glow"></div>
+
+    {% if user %}
+    <nav class="navbar">
+        <a href="{{ url_for('index') }}" class="logo">💸 SpendWise</a>
+        <div class="nav-links">
+            <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">Dashboard</a>
+            <a href="{{ url_for('history') }}"
+                class="{% if request.endpoint == 'history' %}active{% endif %}">History</a>
+        </div>
+        <div class="nav-user">
+            <span class="avatar">{{ user.name[0]|upper }}</span>
+            <span class="username">{{ user.name }}</span>
+            <a href="{{ url_for('logout') }}" class="logout">Logout</a>
+        </div>
+    </nav>
+    {% endif %}
+
+    <main class="container">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="flash-wrap">
+            {% for m in messages %}
+            <div class="flash">{{ m }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <p>Made with 💜 while learning Flask</p>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

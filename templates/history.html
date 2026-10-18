@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}History{% endblock %}
+{% block content %}
+
+<section class="hero">
+    <div>
+        <h1>📜 History</h1>
+        <p class="muted">Every rupee, grouped by day</p>
+    </div>
+    {% if days %}
+    <div class="card stat inline">
+        <span class="card-label">Total shown</span>
+        <span class="card-value gradient-text">₹{{ "%.2f"|format(grand_total) }}</span>
+    </div>
+    {% endif %}
+</section>
+
+<section class="card">
+    <h2>🔍 Filter</h2>
+    <form method="get" action="{{ url_for('history') }}" class="filter-form">
+        <label>Date
+            <input type="date" name="date" value="{{ f_date }}" />
+        </label>
+        <label>Category
+            <select name="category">
+                <option value="">All categories</option>
+                {% for c in categories %}
+                <option value="{{ c }}" {% if f_cat==c %}selected{% endif %}>{{ c }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <div class="filter-buttons">
+            <button type="submit" class="btn-primary">Apply</button>
+            <a href="{{ url_for('history') }}" class="btn-ghost">Clear</a>
+        </div>
+    </form>
+</section>
+
+{% if days %}
+{% for d in days %}
+<section class="card day-block">
+    <div class="day-head">
+        <h2>📅 {{ d.date }}</h2>
+        <span class="day-total">₹{{ "%.2f"|format(d.total) }}</span>
+    </div>
+    <div class="expense-list">
+        {% for e in d["items"] %}
+        <div class="expense-row">
+            <div class="expense-main">
+                <span class="expense-title">{{ e.title }}</span>
+                <span class="muted small">{% if e.time %}{{ e.time }} · {% endif %}{{ e.category }}</span>
+            </div>
+            <span class="badge">{{ e.category }}</span>
+            <span class="expense-amount">₹{{ "%.2f"|format(e.amount) }}</span>
+            <form action="{{ url_for('delete_expense', expense_id=e.id) }}" method="post">
+                <button type="submit" class="danger" title="Delete">✕</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endfor %}
+{% else %}
+<section class="card">
+    <p class="empty">No expenses match these filters. Try clearing them 👆</p>
+</section>
+{% endif %}
+
+{% endblock %}

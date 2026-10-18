@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Sign up{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+    <div class="auth-card">
+        <div class="auth-logo">💸</div>
+        <h1>Create your account</h1>
+        <p class="muted">Start tracking your money in 30 seconds</p>
+        <form method="post" class="auth-form">
+            <label>Your name
+                <input type="text" name="name" required maxlength="60" autocomplete="name" />
+            </label>
+            <label>Choose a username
+                <input type="text" name="username" required maxlength="40" autocomplete="username" />
+            </label>
+            <label>Choose a password
+                <input type="password" name="password" required minlength="4" autocomplete="new-password" />
+            </label>
+            <button type="submit" class="btn-primary">Sign up →</button>
+        </form>
+        <p class="muted center">Already have an account? <a href="{{ url_for('login') }}">Log in</a></p>
+    </div>
+</div>
+{% endblock %}

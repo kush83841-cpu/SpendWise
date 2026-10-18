@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+
+<section class="hero">
+    <div>
+        <h1>Hey {{ user.name }} 👋</h1>
+        <p class="muted">Here's your money story for {{ month }}</p>
+    </div>
+</section>
+
+<section class="cards">
+    <div class="card stat">
+        <span class="card-label">Spent in {{ month }}</span>
+        <span class="card-value gradient-text">₹{{ "%.2f"|format(month_total) }}</span>
+    </div>
+    <div class="card stat">
+        <span class="card-label">Spent today</span>
+        <span class="card-value">₹{{ "%.2f"|format(today_total) }}</span>
+    </div>
+    <div class="card stat">
+        <span class="card-label">Categories used</span>
+        <span class="card-value">{{ by_category|length }}</span>
+    </div>
+</section>
+
+<div class="grid">
+    <section class="card">
+        <h2>➕ Add expense</h2>
+        <form action="{{ url_for('add_expense') }}" method="post" class="expense-form">
+            <label>What was it?
+                <input type="text" name="title" maxlength="100" placeholder="e.g. Lunch with friends (optional)" />
+            </label>
+            <div class="row2">
+                <label>Amount (₹)
+                    <input type="number" name="amount" step="0.01" min="0.01" required placeholder="0.00" />
+                </label>
+                <label>Category
+                    <select name="category" id="categorySelect">
+                        {% for c in categories %}
+                        <option value="{{ c }}">{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+            </div>
+            <div class="row2">
+                <label>Date
+                    <input type="date" name="date" value="{{ today }}" required />
+                </label>
+                <label>Time
+                    <input type="time" name="time" />
+                </label>
+            </div>
+            <button type="submit" class="btn-primary">Add expense ✨</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h2>📊 Where it went</h2>
+        {% if by_category %}
+        <div class="chart-box"><canvas id="chart"></canvas></div>
+        {% else %}
+        <p class="empty">No expenses yet this month.<br>Add one and watch this space light up ✨</p>
+        {% endif %}
+    </section>
+</div>
+
+<section class="card">
+    <div class="card-head">
+        <h2>🕘 Recent expenses</h2>
+        <a href="{{ url_for('history') }}" class="link">View full history →</a>
+    </div>
+    {% if recent %}
+    <div class="expense-list">
+        {% for e in recent %}
+        <div class="expense-row">
+            <div class="expense-main">
+                <span class="expense-title">{{ e.title }}</span>
+                <span class="muted small">{{ e.date }}{% if e.time %} · {{ e.time }}{% endif %}</span>
+            </div>
+            <span class="badge">{{ e.category }}</span>
+            <span class="expense-amount">₹{{ "%.2f"|format(e.amount) }}</span>
+            <form action="{{ url_for('delete_expense', expense_id=e.id) }}" method="post">
+                <button type="submit" class="danger" title="Delete">✕</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="empty">Nothing here yet. Your first expense goes above 👆</p>
+    {% endif %}
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Auto-fill the time field with the current time (still editable & optional)
+    const timeInput = document.querySelector('input[name="time"]');
+    if (timeInput && !timeInput.value) {
+        timeInput.value = new Date().toTimeString().slice(0, 5); // "HH:MM"
+    }
+
+    // Doughnut chart of this month's spending per category
+    fetch("{{ url_for('api_summary') }}")
+        .then((r) => r.json())
+        .then((data) => {
+            const canvas = document.getElementById("chart");
+            if (!canvas || data.labels.length === 0) return;
+            new Chart(canvas, {
+                type: "doughnut",
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.totals,
+                        backgroundColor: ["#8b5cf6", "#ec4899", "#06b6d4", "#f59e0b", "#10b981", "#f43f5e", "#a3e635"],
+                        borderWidth: 0,
+                    }],
+                },
+                options: {
+                    cutout: "62%",
+                    plugins: { legend: { position: "bottom", labels: { color: "#cbd5e1", padding: 14 } } },
+                },
+            });
+        });
+
+</script>
+{% endblock %}
