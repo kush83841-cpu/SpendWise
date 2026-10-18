@@ -11,7 +11,7 @@ Features:
 
 import os
 import sqlite3
-from datetime import date, timedelta
+from datetime import date
 from functools import wraps
 
 from flask import (
@@ -274,6 +274,7 @@ def service_worker():
     """Serve the service worker from the root so it controls the whole app."""
     return app.send_static_file("sw.js")
 
+
 @app.route("/api/summary")
 @login_required
 def api_summary():
@@ -295,61 +296,11 @@ def api_summary():
         }
     )
 
-def subtract_months(d, n):
-    """First day of the month, n months before date d."""
-    month = d.month - n
-    year = d.year
-    while month <= 0:
-        month += 12
-        year -= 1
-    return date(year, month, 1)
 
+# Run at import time too, so tables exist when Render/gunicorn imports the app
+with app.app_context():
+    init_db()
 
-@app.route("/insights")
-@login_required
-def insights():
-    return render_template("insights.html", user=current_user())
-
-
-@app.route("/api/spending")
-@login_required
-def api_spending():
-    """Bar-chart data: totals per day (weekly), per month, or per year."""
-    period = request.args.get("period", "weekly")
-    uid = session["user_id"]
-    db = get_db()
-    labels, totals = [], []
-    today = date.today()
-
-    if period == "monthly":
-        for i in range(11, -1, -1):
-            m = subtract_months(today, i)
-            key = m.strftime("%Y-%m")
-            labels.append(m.strftime("%b %y"))
-            totals.append(db.execute(
-                "SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE user_id = ? AND date LIKE ?",
-                (uid, key + "%"),
-            ).fetchone()[0])
-    elif period == "yearly":
-        for y in range(today.year - 4, today.year + 1):
-            labels.append(str(y))
-            totals.append(db.execute(
-                "SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE user_id = ? AND date LIKE ?",
-                (uid, str(y) + "%"),
-            ).fetchone()[0])
-    else:  # weekly: last 7 days
-        for i in range(6, -1, -1):
-            d = today - timedelta(days=i)
-            labels.append(d.strftime("%a %d"))
-            totals.append(db.execute(
-                "SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE user_id = ? AND date = ?",
-                (uid, d.isoformat()),
-            ).fetchone()[0])
-
-    return jsonify({"labels": labels, "totals": totals})
 
 if __name__ == "__main__":
-    with app.app_context():
-        init_db()
     app.run(debug=True)
-    
