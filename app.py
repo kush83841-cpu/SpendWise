@@ -269,6 +269,11 @@ def history():
 
 # ---------- chart data ----------
 
+@app.route("/sw.js")
+def service_worker():
+    """Serve the service worker from the root so it controls the whole app."""
+    return app.send_static_file("sw.js")
+
 @app.route("/api/summary")
 @login_required
 def api_summary():
